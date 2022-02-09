@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"os"
@@ -53,18 +54,67 @@ func (peer *Peer) Spawn() {
 
 /* ---- NODE FUNCTIONALITY ---- */
 
+// send a message to a specified host via the application specified reverse-message/ route
+func send(remoteHost utils.SocketAddr, msg string) (string, error) {
+	response, err := utils.Request(remoteHost, []byte("reverse-message/"), []byte(msg)) // Uses the utils package (recommended)
+	if err != nil {
+		return "", err
+	}
+	return string(response), nil
+}
+
+
+// Takes as input a string and returns the string in reverse.
+func reverse(s string) string {
+	rns := []rune(s) // Convert string to rune array
+	for i, j := 0, len(rns)-1; i < j; i, j = i+1, j-1 {
+		// Swap the letters of the string
+		rns[i], rns[j] = rns[j], rns[i]
+	}
+	return string(rns)
+}
+
 func heartbeatEndpoint(_ *node.Node, payload []byte) []byte {
 	message := string(payload)
 	fmt.Println(message)
 	return []byte("I'm alive too!")
 }
 
+// The serverBehavior for this application is to reverse the packet it receives and return it back to the sender as a
+// response
+func revStrServ(_ *node.Node, payload []byte) []byte {
+	message := string(payload)
+	reversedMsg := reverse(message)
+	return []byte(reversedMsg)
+}
+
+
 func clientBehaviour(appInterface interface{}) {
 	peer := appInterface.(*Peer)
 	fmt.Println(len(peer.GetNode().KnownHosts()))
+	go func() {
+		for {
+			Heartbeat(peer)
+			time.Sleep(time.Second * 5)
+		}
+	}()
+
 	for {
-		Heartbeat(peer)
-		time.Sleep(time.Second * 10)
+		fmt.Print("Type message:")
+		in := bufio.NewReader(os.Stdin)
+		line, _ := in.ReadString('\n') // Read string up to newline
+
+		knownHosts := peer.node.KnownHosts() // Get the node's known hosts
+
+		for i := 0; i < len(knownHosts); i++ { // For each known host
+			res, err := send(knownHosts[i], line) // Ask them to reverse the input message
+			if err != nil {
+				// If there is an error, log the error BUT DO NOT FAIL - in decentralised application we avoid fatal
+				// errors at all costs as we want to maximise node availability
+				fmt.Println("Unable to send message to", knownHosts[i])
+			}
+			fmt.Println(knownHosts[i].ToString(), "responded with:", res)
+		}
 	}
 }
 
@@ -90,7 +140,8 @@ func Heartbeat(peer *Peer) {
 		if err != nil {
 			// If there is an error, log the error BUT DO NOT FAIL - in decentralised application we avoid fatal
 			// errors at all costs as we want to maximise node availability
-			fmt.Println("Unable to send message to", recipients[i])
+			fmt.Println("Appears to have Died", recipients[i])
+			peer.GetNode().KnownHosts()
 		}
 		if bytes.Equal(response, []byte("I'm alive too!")) {
 			fmt.Println(recipients[i], "is okay")
@@ -120,6 +171,7 @@ func main() {
 	// Specifying app level server behaviours - you can specify as many as you like as long as they are not reserved by
 	// other butter packages
 	peer.GetNode().RegisterRoute("heartbeat/", heartbeatEndpoint) // The client behaviour interacts with this route
+	peer.GetNode().RegisterRoute("reverse-message/", revStrServ) // The client behaviour interacts with this route
 
 	// Spawn your node into the butter network
 	butter.Spawn(peer.GetNode(), false, peer) // Blocking
