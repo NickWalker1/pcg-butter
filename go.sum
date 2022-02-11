@@ -2,6 +2,8 @@ github.com/a-shine/butter v0.0.0-20220204145629-fc84878bc3ca h1:DmqLRbR8QlXMQv+n
 github.com/a-shine/butter v0.0.0-20220204145629-fc84878bc3ca/go.mod h1:LTo5iZD8s8jCC3gLKKChLLPSyzQy2pDMqjNci2IIerk=
 github.com/a-shine/butter v0.0.0-20220207161947-7fb900f930ed h1:6X18WK3Fh9M2Pn4g2J93Wndim0gLzhjDaurjYIFMuCw=
 github.com/a-shine/butter v0.0.0-20220207161947-7fb900f930ed/go.mod h1:LTo5iZD8s8jCC3gLKKChLLPSyzQy2pDMqjNci2IIerk=
+github.com/a-shine/butter v0.0.0-20220209152843-b5326bfd7b35 h1:AtJD/p4jusSO5F1U1PHJase4WZmmEbtxBosydgakCl8=
+github.com/a-shine/butter v0.0.0-20220209152843-b5326bfd7b35/go.mod h1:LTo5iZD8s8jCC3gLKKChLLPSyzQy2pDMqjNci2IIerk=
 github.com/jordwest/mock-conn v0.0.0-20180617021051-4896c6bd1641 h1:ChkB2s4mFDekyUUmbNE7qNhennP0rfqF2YZUOGxbhFk=
 github.com/jordwest/mock-conn v0.0.0-20180617021051-4896c6bd1641/go.mod h1:AJFEOPtj5Z5z3MAy+0uvjQAH02iRnQr6fnvuHYp/Jek=
 github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d h1:VhgPp6v9qf9Agr/56bj7Y/xa04UccTW04VP0Qed4vnQ=

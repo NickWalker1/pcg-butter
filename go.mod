@@ -3,7 +3,7 @@ module pcg-butter
 go 1.17
 
 require (
-	github.com/a-shine/butter v0.0.0-20220207161947-7fb900f930ed
+	github.com/a-shine/butter v0.0.0-20220209152843-b5326bfd7b35
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
 )
 

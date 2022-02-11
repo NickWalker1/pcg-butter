@@ -39,7 +39,7 @@ type Peer struct {
 	groups []Group
 }
 
-func (peer *Peer) GetNode() *node.Node {
+func (peer *Peer) Node() *node.Node {
 	return peer.node
 }
 
@@ -53,15 +53,15 @@ func (peer *Peer) Spawn() {
 
 /* ---- NODE FUNCTIONALITY ---- */
 
-func heartbeatEndpoint(_ *node.Node, payload []byte) []byte {
+func heartbeatEndpoint(appInterface node.Overlay, payload []byte) []byte {
 	message := string(payload)
 	fmt.Println(message)
 	return []byte("I'm alive too!")
 }
 
-func clientBehaviour(appInterface interface{}) {
+func clientBehaviour(appInterface node.Overlay) {
 	peer := appInterface.(*Peer)
-	fmt.Println(len(peer.GetNode().KnownHosts()))
+	fmt.Println(len(peer.Node().KnownHosts()))
 	for {
 		Heartbeat(peer)
 		time.Sleep(time.Second * 10)
@@ -74,7 +74,7 @@ func Heartbeat(peer *Peer) {
 
 	var recipients = make([]utils.SocketAddr, 0)
 
-	recipients = peer.GetNode().KnownHosts()
+	recipients = peer.Node().KnownHosts()
 
 	for _, group := range *peer.Groups() {
 		for _, member := range *group.Members() {
@@ -86,6 +86,8 @@ func Heartbeat(peer *Peer) {
 	//TODO only send to those we are in groups with.
 
 	for i := 0; i < len(recipients); i++ { // For each known host
+		/* Problem: issue with timeouts on recipients, as if they're dead may block indefinitely.
+		 * Also if each one makes you wait for too long you may be going too slowly so other nodes think you're dead :( */
 		response, err := utils.Request(recipients[i], []byte("heartbeat/"), []byte("I'm alive. Are you still alive?")) // Uses the utils package (recommended)
 		if err != nil {
 			// If there is an error, log the error BUT DO NOT FAIL - in decentralised application we avoid fatal
@@ -101,7 +103,7 @@ func Heartbeat(peer *Peer) {
 
 func CreatePeer() *Peer {
 
-	peerNode, err := node.NewNode(0, 2048, clientBehaviour, false)
+	peerNode, err := node.NewNode(0, 2048, false)
 	if err != nil {
 		fmt.Println("Fucked it")
 		os.Exit(2)
@@ -115,13 +117,14 @@ func main() {
 
 	peer := CreatePeer()
 
-	fmt.Println("Node is listening at", peer.GetNode().Address())
+	fmt.Println("Node is listening at", peer.Node().Address())
 
 	// Specifying app level server behaviours - you can specify as many as you like as long as they are not reserved by
 	// other butter packages
-	peer.GetNode().RegisterRoute("heartbeat/", heartbeatEndpoint) // The client behaviour interacts with this route
+	peer.Node().RegisterClientBehaviour(clientBehaviour)
+	peer.Node().RegisterServerBehaviour("heartbeat/", heartbeatEndpoint) // The client behaviour interacts with this route
 
 	// Spawn your node into the butter network
-	butter.Spawn(peer.GetNode(), false, peer) // Blocking
+	butter.Spawn(peer, false) // Blocking
 
 }
